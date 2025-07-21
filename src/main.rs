@@ -1,19 +1,23 @@
 use gpui::{
-    App, Application, Bounds, SharedString, WindowBounds, WindowOptions, div, prelude::*, px, red,
-    size,
+    App, Application, Bounds, KeyBinding, Menu, MenuItem, SharedString, WindowBounds,
+    WindowOptions, actions, prelude::*, px, size,
 };
 
-struct Root {}
+use toshokan::root::*;
 
-impl Render for Root {
-    fn render(&mut self, window: &mut gpui::Window, cx: &mut Context<Self>) -> impl IntoElement {
-        div().child("hello, world").text_color(red())
-    }
-}
+actions!(toshokan, [Quit]);
 
 fn main() {
     Application::new().run(move |cx: &mut App| {
         gpui_component::init(cx);
+
+        cx.on_action(|_: &Quit, cx| cx.quit());
+        cx.bind_keys([KeyBinding::new("cmd-q", Quit, None)]);
+        cx.set_menus(vec![Menu {
+            name: "图书馆".into(),
+            items: vec![MenuItem::action("Quit", Quit)],
+        }]);
+        cx.activate(true);
 
         let bounds = Bounds::centered(None, size(px(500.0), px(500.0)), cx);
         let window_options = WindowOptions {
@@ -27,6 +31,5 @@ fn main() {
         };
         cx.open_window(window_options, |_, cx| cx.new(|_| Root {}))
             .unwrap();
-        cx.activate(true);
     });
 }
