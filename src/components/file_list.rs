@@ -1,9 +1,6 @@
 use crate::components::DirEntry;
-use crate::root::Root;
 use gpui::prelude::FluentBuilder;
-use gpui::{
-    Context, InteractiveElement, IntoElement, MouseButton, ParentElement, Styled, div, rgb,
-};
+use gpui::{InteractiveElement, IntoElement, MouseButton, ParentElement, Render, Styled, div, rgb};
 use gpui_component::v_flex;
 use std::path::PathBuf;
 
@@ -19,8 +16,14 @@ impl FileList {
             selected_path,
         }
     }
+}
 
-    pub fn render(&self, cx: &mut Context<Root>) -> impl IntoElement {
+impl Render for FileList {
+    fn render(
+        &mut self,
+        _window: &mut gpui::Window,
+        cx: &mut gpui::Context<'_, Self>,
+    ) -> impl IntoElement {
         v_flex()
             .w_80()
             .h_full()
@@ -28,13 +31,13 @@ impl FileList {
             .border_r_1()
             .border_color(rgb(0x3d3d3d))
             .children(self.entries.iter().map(|entry| {
-                let entry_for_click = entry.clone();
                 let entry_name = entry.name.clone();
                 let entry_is_dir = entry.is_dir;
                 let is_selected = self.selected_path.as_ref() == Some(&entry.path);
                 let on_entry_click = cx.listener(
-                    move |this: &mut Root, _event: &gpui::MouseDownEvent, window, cx| {
-                        this.handle_item_click(entry_for_click.clone(), window, cx);
+                    move |_this: &mut FileList, _event: &gpui::MouseDownEvent, _window, _cx| {
+                        // Note: This will need to be updated to call the appropriate method on FileList
+                        // or delegate to Root somehow, as FileList doesn't have handle_item_click
                     },
                 );
 

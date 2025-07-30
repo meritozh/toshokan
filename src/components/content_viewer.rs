@@ -1,5 +1,9 @@
-use gpui::{IntoElement, ParentElement, SharedString, Styled, div, rgb, white};
+use gpui::{
+    AppContext, Context, IntoElement, ParentElement, Render, RenderOnce, SharedString, Styled,
+    Window, div, rgb, white,
+};
 
+#[derive(IntoElement)]
 pub struct ContentViewer {
     file_name: Option<SharedString>,
     content: Option<SharedString>,
@@ -12,8 +16,10 @@ impl ContentViewer {
             content: content.map(SharedString::from),
         }
     }
+}
 
-    pub fn render(&self) -> impl IntoElement {
+impl RenderOnce for ContentViewer {
+    fn render(self, _window: &mut Window, _cx: &mut AppContext<Self>) -> impl IntoElement {
         div()
             .flex_1()
             .p_4()
