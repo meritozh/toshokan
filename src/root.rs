@@ -1,11 +1,10 @@
-use gpui::prelude::FluentBuilder;
 use gpui::{
-    Context, InteractiveElement, IntoElement, MouseButton, ParentElement, Render, SharedString,
-    Styled, Window, div, rgb, white,
+    Context, IntoElement, ParentElement, Render, SharedString, Styled, Window, div, rgb, white,
 };
-use gpui_component::v_flex;
 use std::fs;
 use std::path::PathBuf;
+
+use crate::components::{ContentViewer, DirEntry, FileList, Header};
 
 pub struct Root {
     current_path: PathBuf,
@@ -13,13 +12,6 @@ pub struct Root {
 
     selected_item: Option<DirEntry>,
     file_content: Option<String>,
-}
-
-#[derive(Clone, Debug)]
-struct DirEntry {
-    name: SharedString,
-    is_dir: bool,
-    path: PathBuf,
 }
 
 impl Root {
@@ -63,7 +55,12 @@ impl Root {
         entries
     }
 
-    fn handle_item_click(&mut self, entry: DirEntry, _window: &mut Window, cx: &mut Context<Self>) {
+    pub fn handle_item_click(
+        &mut self,
+        entry: DirEntry,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         if entry.is_dir {
             // Change directory
             self.current_path = entry.path.clone();
@@ -81,103 +78,22 @@ impl Root {
 
 impl Render for Root {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let selected_item = self.selected_item.clone();
+        let selected_path = self.selected_item.as_ref().map(|item| item.path.clone());
         let entries = self.entries.clone();
+        let file_name = self.selected_item.as_ref().map(|item| item.name.clone());
+        let file_content = self.file_content.clone();
 
         div()
             .size_full()
             .bg(rgb(0x1e1e1e))
             .text_color(white())
-            .child(
-                div().p_4().border_b_1().border_color(rgb(0x333333)).child(
-                    div()
-                        .text_color(white())
-                        .child(format!("Current: {}", self.current_path.display())),
-                ),
-            )
+            .child(Header::new(self.current_path.clone()).render())
             .child(
                 div()
                     .flex()
                     .h_full()
-                    .child(
-                        div()
-                            .w_1_2()
-                            .border_r_1()
-                            .border_color(rgb(0x333333))
-                            .child(v_flex().size_full().child(div().children(
-                                entries.iter().enumerate().map(|(_ix, entry)| {
-                                    let entry_clone = entry.clone();
-                                    let is_selected = selected_item
-                                        .as_ref()
-                                        .map_or(false, |s| s.path == entry.path);
-
-                                    div()
-                                        .px_4()
-                                        .py_2()
-                                        .border_b_1()
-                                        .border_color(rgb(0x2a2a2a))
-                                        .when(is_selected, |s| s.bg(rgb(0x3d3d3d)))
-                                        .hover(|s| s.bg(rgb(0x2d2d2d)))
-                                        .on_mouse_down(
-                                            gpui::MouseButton::Left,
-                                            cx.listener(move |this, _event, window, cx| {
-                                                this.handle_item_click(
-                                                    entry_clone.clone(),
-                                                    window,
-                                                    cx,
-                                                );
-                                            }),
-                                        )
-                                        .child(
-                                            div()
-                                                .flex()
-                                                .items_center()
-                                                .gap_2()
-                                                .child(
-                                                    div()
-                                                        .text_color(if entry.is_dir {
-                                                            rgb(0x60a5fa)
-                                                        } else {
-                                                            rgb(0x9ca3af)
-                                                        })
-                                                        .child(if entry.is_dir {
-                                                            "📁"
-                                                        } else {
-                                                            "📄"
-                                                        }),
-                                                )
-                                                .child(
-                                                    div()
-                                                        .text_color(white())
-                                                        .child(entry.name.clone()),
-                                                ),
-                                        )
-                                }),
-                            ))),
-                    )
-                    .child(
-                        div()
-                            .flex_1()
-                            .p_4()
-                            .child(if let Some(content) = &self.file_content {
-                                div().size_full().child(
-                                    div()
-                                        .text_color(white())
-                                        .font_family("Consolas, Monaco, monospace")
-                                        .text_sm()
-                                        .whitespace_normal()
-                                        .child(content.clone()),
-                                )
-                            } else {
-                                div()
-                                    .size_full()
-                                    .flex()
-                                    .items_center()
-                                    .justify_center()
-                                    .text_color(rgb(0x9ca3af))
-                                    .child("Select a file to view its contents")
-                            }),
-                    ),
+                    .child(FileList::new(entries, selected_path).render(cx))
+                    .child(ContentViewer::new(file_name, file_content).render()),
             )
     }
 }
