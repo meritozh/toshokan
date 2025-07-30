@@ -2,11 +2,12 @@
 1. use zed's gpui framework to create ui
 2. try to reuse gpui-components, its awesome
 3. code keep simple and stupid
-4. rust use for client gui app, so you doesn't need web preview
-5. if you don't know how to do it, please ask me
-6. use library /zed-industries/zed for gpui api and doc
-7. use library /longbridge/gpui-component for gpui component api and doc
-8. use library /matinaniss/gpui-book for guide book
+4. rust use for client gui app
+5. forbid call preview tool
+6. if you don't know how to do it, please ask me
+7. use library /zed-industries/zed for gpui api and doc
+8. use library /longbridge/gpui-component for gpui component api and doc
+9. use library /matinaniss/gpui-book for guide book
 
 # goals
 1. it's a client gui app, which show specific directory contents use list view, like file manager.
