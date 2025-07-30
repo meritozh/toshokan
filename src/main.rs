@@ -19,7 +19,7 @@ fn main() {
         }]);
         cx.activate(true);
 
-        let bounds = Bounds::centered(None, size(px(500.0), px(500.0)), cx);
+        let bounds = Bounds::centered(None, size(px(1200.0), px(800.0)), cx);
         let window_options = WindowOptions {
             titlebar: Some(gpui::TitlebarOptions {
                 title: Some(SharedString::from("图书馆")),
