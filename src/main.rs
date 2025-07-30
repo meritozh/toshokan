@@ -29,7 +29,9 @@ fn main() {
             window_bounds: Some(WindowBounds::Windowed(bounds)),
             ..Default::default()
         };
-        cx.open_window(window_options, |_, cx| cx.new(|_| Root {}))
-            .unwrap();
+        cx.open_window(window_options, |window, cx| {
+            cx.new(|cx| Root::new(window, cx))
+        })
+        .unwrap();
     });
 }
