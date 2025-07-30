@@ -12,7 +12,7 @@ fn main() {
         gpui_component::init(cx);
 
         cx.on_action(|_: &Quit, cx| cx.quit());
-        cx.bind_keys([KeyBinding::new("cmd-q", Quit, None)]);
+        cx.bind_keys([KeyBinding::new("cmd-q", Quit, Some("App"))]);
         cx.set_menus(vec![Menu {
             name: "toshokan".into(),
             items: vec![MenuItem::action("Quit", Quit)],
