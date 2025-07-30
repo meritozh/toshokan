@@ -14,7 +14,7 @@ fn main() {
         cx.on_action(|_: &Quit, cx| cx.quit());
         cx.bind_keys([KeyBinding::new("cmd-q", Quit, None)]);
         cx.set_menus(vec![Menu {
-            name: "图书馆".into(),
+            name: "toshokan".into(),
             items: vec![MenuItem::action("Quit", Quit)],
         }]);
         cx.activate(true);
