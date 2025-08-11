@@ -13,7 +13,11 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn new(current_path: Option<PathBuf>, cx: &mut Context<Self>) -> Self {
+    pub fn view(
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+        current_path: Option<PathBuf>,
+    ) -> Self {
         let path =
             current_path.unwrap_or(std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/")));
         Self {

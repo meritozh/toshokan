@@ -1,10 +1,11 @@
 use crate::components::DirEntry;
 use gpui::prelude::FluentBuilder;
 use gpui::{
-    Context, InteractiveElement, IntoElement, MouseButton, ParentElement, Render, Styled, Task,
-    Window, div, rgb,
+    Context, InteractiveElement, IntoElement, MouseButton, ParentElement, Render, Styled, Window,
+    div, rgb,
 };
 use gpui_component::v_flex;
+use std::fs;
 use std::path::PathBuf;
 
 pub struct FileList {
@@ -13,9 +14,20 @@ pub struct FileList {
 }
 
 impl FileList {
-    pub fn new(window: &mut Window, cx: Context<Self>, selected_path: &PathBuf) -> Self {
+    pub fn view(_window: &mut Window, _cx: &mut Context<Self>, selected_path: &PathBuf) -> Self {
+        let entries = if selected_path.is_dir() {
+            fs::read_dir(selected_path)
+                .map(|entries| {
+                    entries
+                        .filter_map(|entry| entry.ok().map(|entry| DirEntry::from(entry)))
+                        .collect()
+                })
+                .unwrap_or_default()
+        } else {
+            Vec::new()
+        };
         Self {
-            entries: entries.to_vec(),
+            entries,
             selected_path: selected_path.clone(),
         }
     }

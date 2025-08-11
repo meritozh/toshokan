@@ -23,14 +23,14 @@ fn main() {
         let window_options = WindowOptions {
             titlebar: Some(gpui::TitlebarOptions {
                 title: Some(SharedString::from("图书馆")),
-                appears_transparent: false,
+                appears_transparent: true,
                 ..Default::default()
             }),
             window_bounds: Some(WindowBounds::Windowed(bounds)),
             ..Default::default()
         };
         cx.open_window(window_options, |window, cx| {
-            cx.new(|cx| Root::new(window, cx))
+            cx.new(|cx| Root::view(window, cx))
         })
         .unwrap();
     });

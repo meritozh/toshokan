@@ -4,14 +4,12 @@ use gpui::{
 
 #[derive(IntoElement)]
 pub struct ContentViewer {
-    file_name: Option<SharedString>,
     content: Option<SharedString>,
 }
 
 impl ContentViewer {
-    pub fn new(file_name: Option<SharedString>, content: Option<String>) -> Self {
+    pub fn new(content: Option<String>) -> Self {
         Self {
-            file_name,
             content: content.map(SharedString::from),
         }
     }

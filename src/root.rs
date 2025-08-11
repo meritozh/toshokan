@@ -17,18 +17,19 @@ pub struct Root {
 }
 
 impl Root {
-    pub fn new(_window: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub fn view(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let current_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
         let entries = Self::read_directory(&current_path);
 
-        let header = cx.new(|cx| Header::new(None, cx));
+        let header = cx.new(|cx| Header::view(window, cx, None));
         let file_list = cx.new(|cx| {
             cx.observe(&header, |this: &mut FileList, header, cx| {
                 this.selected_path = header.read(cx).current_path.clone();
                 cx.notify();
             })
             .detach();
-            FileList::new(&entries, &current_path)
+
+            FileList::view(window, cx, &current_path)
         });
         Self {
             current_path,
@@ -94,7 +95,6 @@ impl Root {
 
 impl Render for Root {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        let file_name = self.selected_item.as_ref().map(|item| item.name.clone());
         let file_content = self.file_content.clone();
 
         div()
@@ -111,7 +111,7 @@ impl Render for Root {
                             .flex()
                             .size_full()
                             .child(self.file_list.clone())
-                            .child(ContentViewer::new(file_name, file_content)),
+                            .child(ContentViewer::new(file_content)),
                     ),
             )
     }
