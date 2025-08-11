@@ -5,7 +5,7 @@ use gpui::{
 use std::fs;
 use std::path::PathBuf;
 
-use crate::components::{ContentViewer, DirEntry, FileList, Header};
+use crate::component::{ContentViewer, DirEntry, FileList, Header};
 
 pub struct Root {
     current_path: PathBuf,

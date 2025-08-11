@@ -1,4 +1,4 @@
-use crate::components::DirEntry;
+use crate::component::DirEntry;
 use gpui::prelude::FluentBuilder;
 use gpui::{
     Context, InteractiveElement, IntoElement, MouseButton, ParentElement, Render, Styled, Window,

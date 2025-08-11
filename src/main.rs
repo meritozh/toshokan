@@ -3,7 +3,10 @@ use gpui::{
     WindowOptions, actions, prelude::*, px, size,
 };
 
-use toshokan::root::*;
+mod component;
+mod root;
+
+use root::Root;
 
 actions!(toshokan, [Quit]);
 
