@@ -1,2 +1,2 @@
-pub mod root;
 pub mod components;
+pub mod root;

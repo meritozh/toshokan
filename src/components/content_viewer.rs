@@ -1,6 +1,5 @@
 use gpui::{
-    AppContext, Context, IntoElement, ParentElement, Render, RenderOnce, SharedString, Styled,
-    Window, div, rgb, white,
+    App, IntoElement, ParentElement, RenderOnce, SharedString, Styled, Window, div, rgb, white,
 };
 
 #[derive(IntoElement)]
@@ -19,7 +18,7 @@ impl ContentViewer {
 }
 
 impl RenderOnce for ContentViewer {
-    fn render(self, _window: &mut Window, _cx: &mut AppContext<Self>) -> impl IntoElement {
+    fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
         div()
             .flex_1()
             .p_4()

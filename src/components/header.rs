@@ -13,10 +13,12 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn new(current_path: PathBuf, cx: &mut Context<'_, Window>) -> Self {
+    pub fn new(current_path: Option<PathBuf>, cx: &mut Context<Self>) -> Self {
+        let path =
+            current_path.unwrap_or(std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/")));
         Self {
-            current_path: current_path.clone(),
-            path_input: SharedString::from(current_path.to_string_lossy().to_string()),
+            current_path: path.clone(),
+            path_input: SharedString::from(path.to_string_lossy().to_string()),
             focus_handle: cx.focus_handle(),
             is_editing: false,
         }
@@ -29,7 +31,7 @@ impl Header {
 }
 
 impl Render for Header {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<'_, Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let focus_handle = self.focus_handle.clone();
         let is_editing = self.is_editing;
         let path_input = self.path_input.clone();
@@ -62,6 +64,45 @@ impl Render for Header {
                         CursorStyle::Arrow
                     })
                     .track_focus(&focus_handle)
+                    .on_key_down(
+                        cx.listener(|this, event: &gpui::KeyDownEvent, _window, cx| {
+                            if this.is_editing {
+                                match event.keystroke.key.as_str() {
+                                    "enter" => {
+                                        let new_path = PathBuf::from(this.path_input.to_string());
+                                        if new_path.exists() && new_path.is_dir() {
+                                            this.current_path = new_path;
+                                            // this.entries = Self::read_directory(&this.current_path);
+                                            // this.header.set_path(this.current_path.clone());
+                                            // this.header.is_editing = false;
+                                            // this.selected_item = None;
+                                            // this.file_content = None;
+                                            cx.notify();
+                                        }
+                                    }
+                                    "escape" => {
+                                        this.is_editing = false;
+                                        this.set_path(this.current_path.clone());
+                                        cx.notify();
+                                    }
+                                    "backspace" => {
+                                        let mut text = this.path_input.to_string();
+                                        text.pop();
+                                        this.path_input = SharedString::from(text);
+                                        cx.notify();
+                                    }
+                                    key => {
+                                        if key.len() == 1 {
+                                            let mut text = this.path_input.to_string();
+                                            text.push_str(key);
+                                            this.path_input = SharedString::from(text);
+                                            cx.notify();
+                                        }
+                                    }
+                                }
+                            }
+                        }),
+                    )
                     .on_mouse_down(
                         MouseButton::Left,
                         cx.listener(move |this, _event, window, cx| {

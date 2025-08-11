@@ -1,29 +1,28 @@
 use crate::components::DirEntry;
 use gpui::prelude::FluentBuilder;
-use gpui::{InteractiveElement, IntoElement, MouseButton, ParentElement, Render, Styled, div, rgb};
+use gpui::{
+    Context, InteractiveElement, IntoElement, MouseButton, ParentElement, Render, Styled, Task,
+    Window, div, rgb,
+};
 use gpui_component::v_flex;
 use std::path::PathBuf;
 
 pub struct FileList {
     entries: Vec<DirEntry>,
-    selected_path: Option<PathBuf>,
+    pub selected_path: PathBuf,
 }
 
 impl FileList {
-    pub fn new(entries: Vec<DirEntry>, selected_path: Option<PathBuf>) -> Self {
+    pub fn new(window: &mut Window, cx: Context<Self>, selected_path: &PathBuf) -> Self {
         Self {
-            entries,
-            selected_path,
+            entries: entries.to_vec(),
+            selected_path: selected_path.clone(),
         }
     }
 }
 
 impl Render for FileList {
-    fn render(
-        &mut self,
-        _window: &mut gpui::Window,
-        cx: &mut gpui::Context<'_, Self>,
-    ) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         v_flex()
             .w_80()
             .h_full()
@@ -33,7 +32,7 @@ impl Render for FileList {
             .children(self.entries.iter().map(|entry| {
                 let entry_name = entry.name.clone();
                 let entry_is_dir = entry.is_dir;
-                let is_selected = self.selected_path.as_ref() == Some(&entry.path);
+                let is_selected = self.selected_path == entry.path;
                 let on_entry_click = cx.listener(
                     move |_this: &mut FileList, _event: &gpui::MouseDownEvent, _window, _cx| {
                         // Note: This will need to be updated to call the appropriate method on FileList

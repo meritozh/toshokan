@@ -1,6 +1,6 @@
 use gpui::{
-    Context, CursorStyle, InteractiveElement, IntoElement, ParentElement, Render, SharedString,
-    Styled, Window, div, rgb, white,
+    AppContext, Context, Entity, IntoElement, ParentElement, Render, SharedString, Styled, Window,
+    div, rgb, white,
 };
 use std::fs;
 use std::path::PathBuf;
@@ -10,6 +10,8 @@ use crate::components::{ContentViewer, DirEntry, FileList, Header};
 pub struct Root {
     current_path: PathBuf,
     entries: Vec<DirEntry>,
+    header: Entity<Header>,
+    file_list: Entity<FileList>,
     selected_item: Option<DirEntry>,
     file_content: Option<String>,
 }
@@ -19,9 +21,20 @@ impl Root {
         let current_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
         let entries = Self::read_directory(&current_path);
 
+        let header = cx.new(|cx| Header::new(None, cx));
+        let file_list = cx.new(|cx| {
+            cx.observe(&header, |this: &mut FileList, header, cx| {
+                this.selected_path = header.read(cx).current_path.clone();
+                cx.notify();
+            })
+            .detach();
+            FileList::new(&entries, &current_path)
+        });
         Self {
             current_path,
             entries,
+            header,
+            file_list,
             selected_item: None,
             file_content: None,
         }
@@ -64,7 +77,10 @@ impl Root {
             // Change directory
             self.current_path = entry.path.clone();
             self.entries = Self::read_directory(&self.current_path);
-            self.header.set_path(self.current_path.clone());
+            self.header.update(cx, |header, cx| {
+                header.set_path(self.current_path.clone());
+                cx.notify();
+            });
             self.selected_item = None;
             self.file_content = None;
         } else {
@@ -77,9 +93,7 @@ impl Root {
 }
 
 impl Render for Root {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let selected_path = self.selected_item.as_ref().map(|item| item.path.clone());
-        let entries = self.entries.clone();
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let file_name = self.selected_item.as_ref().map(|item| item.name.clone());
         let file_content = self.file_content.clone();
 
@@ -87,60 +101,16 @@ impl Render for Root {
             .size_full()
             .bg(rgb(0x1e1e1e))
             .text_color(white())
-            .on_key_down(
-                cx.listener(|this, event: &gpui::KeyDownEvent, _window, cx| {
-                    if this.header.is_editing {
-                        match event.keystroke.key.as_str() {
-                            "enter" => {
-                                let new_path = PathBuf::from(this.header.path_input.to_string());
-                                if new_path.exists() && new_path.is_dir() {
-                                    this.current_path = new_path;
-                                    this.entries = Self::read_directory(&this.current_path);
-                                    this.header.set_path(this.current_path.clone());
-                                    this.header.is_editing = false;
-                                    this.selected_item = None;
-                                    this.file_content = None;
-                                    cx.notify();
-                                }
-                            }
-                            "escape" => {
-                                this.header.is_editing = false;
-                                this.header.set_path(this.current_path.clone());
-                                cx.notify();
-                            }
-                            "backspace" => {
-                                let mut text = this.header.path_input.to_string();
-                                text.pop();
-                                this.header.path_input = SharedString::from(text);
-                                cx.notify();
-                            }
-                            key => {
-                                if key.len() == 1 {
-                                    let mut text = this.header.path_input.to_string();
-                                    text.push_str(key);
-                                    this.header.path_input = SharedString::from(text);
-                                    cx.notify();
-                                }
-                            }
-                        }
-                    }
-                }),
-            )
             .child(
                 div()
                     .flex_col()
                     .size_full()
-                    .child(Header {
-                        current_path: current_path.clone(),
-                        path_input: SharedString::from(current_path.to_string_lossy().to_string()),
-                        focus_handle: cx.focus_handle(),
-                        is_editing: false,
-                    })
+                    .child(self.header.clone())
                     .child(
                         div()
                             .flex()
                             .size_full()
-                            .child(FileList::new(entries, selected_path))
+                            .child(self.file_list.clone())
                             .child(ContentViewer::new(file_name, file_content)),
                     ),
             )
