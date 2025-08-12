@@ -1,12 +1,12 @@
-pub mod content_viewer;
-pub mod file_list;
-pub mod header;
+pub(crate) mod content_viewer;
+pub(crate) mod file_list;
+pub(crate) mod header;
 
 use std::path::PathBuf;
 
-pub use content_viewer::ContentViewer;
-pub use file_list::FileList;
-pub use header::Header;
+pub(crate) use content_viewer::ContentViewer;
+pub(crate) use file_list::FileList;
+pub(crate) use header::Header;
 
 #[derive(Clone, Debug)]
 pub struct DirEntry {

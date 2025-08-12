@@ -5,6 +5,7 @@ use gpui::{
 
 mod component;
 mod root;
+mod ui;
 
 use root::Root;
 
