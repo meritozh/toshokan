@@ -1,11 +1,12 @@
 use gpui::{
     AppContext, Context, Entity, IntoElement, ParentElement, Render, SharedString, Styled, Window,
-    div, rgb, white,
+    div, px, rgb, white,
 };
 use std::fs;
 use std::path::PathBuf;
 
-use crate::component::{ContentViewer, DirEntry, FileList, Header};
+use crate::components::header::HeaderEvent;
+use crate::components::{ContentViewer, DirEntry, FileList, Header};
 
 pub struct Root {
     current_path: PathBuf,
@@ -21,16 +22,32 @@ impl Root {
         let current_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
         let entries = Self::read_directory(&current_path);
 
-        let header = cx.new(|cx| Header::view(window, cx, None));
-        let file_list = cx.new(|cx| {
-            cx.observe(&header, |this: &mut FileList, header, cx| {
-                this.selected_path = header.read(cx).current_path.clone();
-                cx.notify();
-            })
-            .detach();
+        let header = cx.new(|cx| Header::new(None, cx));
+        let file_list = cx.new(|cx| FileList::new(_window, cx, &current_path));
 
-            FileList::view(window, cx, &current_path)
-        });
+        // Set up observer for file selection changes
+        let file_list_weak = file_list.downgrade();
+        cx.observe(&file_list, move |this: &mut Root, _file_list, cx| {
+            if let Some(file_list) = file_list_weak.upgrade() {
+                if let Some(selected_entry) = file_list.read(cx).get_selected_entry() {
+                    let entry = selected_entry.clone();
+                    this.handle_item_click(entry, cx);
+                }
+            }
+        })
+        .detach();
+
+        // Set up observer for header navigation events
+        cx.subscribe(
+            &header,
+            move |this: &mut Root, _header, event: &HeaderEvent, cx| match event {
+                HeaderEvent::NavigateTo(path) => {
+                    this.navigate_to_directory(path.clone(), cx);
+                }
+            },
+        )
+        .detach();
+
         Self {
             current_path,
             entries,
@@ -40,7 +57,6 @@ impl Root {
             file_content: None,
         }
     }
-
     fn read_directory(path: &PathBuf) -> Vec<DirEntry> {
         let mut entries = Vec::new();
 
@@ -68,27 +84,30 @@ impl Root {
         entries
     }
 
-    pub fn handle_item_click(
-        &mut self,
-        entry: DirEntry,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn handle_item_click(&mut self, entry: DirEntry, cx: &mut Context<Self>) {
         if entry.is_dir {
             // Change directory
-            self.current_path = entry.path.clone();
-            self.entries = Self::read_directory(&self.current_path);
-            self.header.update(cx, |header, cx| {
-                header.set_path(self.current_path.clone());
-                cx.notify();
-            });
-            self.selected_item = None;
-            self.file_content = None;
+            self.navigate_to_directory(entry.path.clone(), cx);
         } else {
             // Read file content
             self.selected_item = Some(entry.clone());
             self.file_content = fs::read_to_string(&entry.path).ok();
+            cx.notify();
         }
+    }
+
+    pub fn navigate_to_directory(&mut self, path: PathBuf, cx: &mut Context<Self>) {
+        self.current_path = path.clone();
+        self.entries = Self::read_directory(&self.current_path);
+        self.header.update(cx, |header, cx| {
+            header.set_path(self.current_path.clone());
+            cx.notify();
+        });
+        self.file_list.update(cx, |file_list, cx| {
+            file_list.update_directory(&self.current_path, cx);
+        });
+        self.selected_item = None;
+        self.file_content = None;
         cx.notify();
     }
 }
@@ -110,8 +129,15 @@ impl Render for Root {
                         div()
                             .flex()
                             .size_full()
-                            .child(self.file_list.clone())
-                            .child(ContentViewer::new(file_content)),
+                            .child(
+                                div()
+                                    .flex_shrink()
+                                    .flex_basis(px(300.0))
+                                    .min_w(px(200.0))
+                                    .max_w(px(500.0))
+                                    .child(self.file_list.clone()),
+                            )
+                            .child(ContentViewer::new(file_name, file_content)),
                     ),
             )
     }

@@ -1,0 +1,10 @@
+This is a test file for the Toshokan file manager.
+It contains some sample content to demonstrate the file preview functionality.
+
+Line 1: Hello, World!
+Line 2: This is a test of the emergency broadcast system.
+Line 3: The quick brown fox jumps over the lazy dog.
+Line 4: 1234567890 ABCDEFGHIJKLMNOPQRSTUVWXYZ
+Line 5: Special characters: !@#$%^&*()_+-=[]{}|;':",./<>?
+
+End of test file.

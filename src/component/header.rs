@@ -1,16 +1,22 @@
 use gpui::{
-    Context, CursorStyle, FocusHandle, InteractiveElement, IntoElement, MouseButton, ParentElement,
-    Render, SharedString, Styled, Window, div, rgb, white,
+    Context, CursorStyle, EventEmitter, FocusHandle, InteractiveElement, IntoElement, MouseButton, ParentElement,
+    Render, SharedString, Styled, Window, div, prelude::*, rgb, white,
 };
 use std::path::PathBuf;
 
 #[derive(Clone)]
+pub enum HeaderEvent {
+    NavigateTo(PathBuf),
+}
+
 pub struct Header {
     pub current_path: PathBuf,
     pub path_input: SharedString,
     pub focus_handle: FocusHandle,
     pub is_editing: bool,
 }
+
+impl EventEmitter<HeaderEvent> for Header {}
 
 impl Header {
     pub fn view(
@@ -32,6 +38,18 @@ impl Header {
         self.current_path = path.clone();
         self.path_input = SharedString::from(path.to_string_lossy().to_string());
     }
+
+    pub fn go_back(&mut self, cx: &mut Context<Self>) -> Option<PathBuf> {
+        if let Some(parent) = self.current_path.parent() {
+            let parent_path = parent.to_path_buf();
+            self.set_path(parent_path.clone());
+            cx.emit(HeaderEvent::NavigateTo(parent_path.clone()));
+            cx.notify();
+            Some(parent_path)
+        } else {
+            None
+        }
+    }
 }
 
 impl Render for Header {
@@ -39,6 +57,7 @@ impl Render for Header {
         let focus_handle = self.focus_handle.clone();
         let is_editing = self.is_editing;
         let path_input = self.path_input.clone();
+        let can_go_back = self.current_path.parent().is_some();
 
         div()
             .flex()
@@ -47,6 +66,21 @@ impl Render for Header {
             .bg(rgb(0x2d2d2d))
             .border_b_1()
             .border_color(rgb(0x3e3e3e))
+            .child(
+                div()
+                    .mr_3()
+                    .px_2()
+                    .py_1()
+                    .rounded_sm()
+                    .bg(if can_go_back { rgb(0x4a4a4a) } else { rgb(0x2a2a2a) })
+                    .text_color(if can_go_back { white() } else { rgb(0x666666).into() })
+                    .child("← Back")
+                    .when(can_go_back, |s| {
+                            s.on_mouse_down(MouseButton::Left, cx.listener(|this, _event, _window, cx| {
+                                this.go_back(cx);
+                            }))
+                        }),
+            )
             .child(div().text_color(white()).mr_2().child("Path:"))
             .child(
                 div()
