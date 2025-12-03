@@ -1,13 +1,14 @@
 use gpui::{
-    App, Application, Bounds, KeyBinding, Menu, MenuItem, SharedString, WindowBounds,
-    WindowOptions, actions, prelude::*, px, size,
+    actions, prelude::*, px, size, App, Application, Bounds, KeyBinding,
+    Menu, MenuItem, SharedString, WindowBounds, WindowOptions,
 };
+use gpui_component::Root;
 
 mod component;
-mod root;
+mod shelf;
 mod ui;
 
-use root::Root;
+use shelf::Shelf;
 
 actions!(toshokan, [Quit]);
 
@@ -33,9 +34,11 @@ fn main() {
             window_bounds: Some(WindowBounds::Windowed(bounds)),
             ..Default::default()
         };
-        cx.open_window(window_options, |window, cx| {
-            cx.new(|cx| Root::view(window, cx))
-        })
-        .unwrap();
+        if let Err(err) = cx.open_window(window_options, |window, cx| {
+            let shelf = cx.new(|cx| Shelf::new(window, cx));
+            cx.new(|cx| Root::new(shelf, window, cx))
+        }) {
+            eprintln!("Failed to open window: {err}");
+        }
     });
 }

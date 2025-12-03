@@ -109,12 +109,9 @@ impl Render for Header {
                                     "enter" => {
                                         let new_path = PathBuf::from(this.path_input.to_string());
                                         if new_path.exists() && new_path.is_dir() {
-                                            this.current_path = new_path;
-                                            // this.entries = Self::read_directory(&this.current_path);
-                                            // this.header.set_path(this.current_path.clone());
-                                            // this.header.is_editing = false;
-                                            // this.selected_item = None;
-                                            // this.file_content = None;
+                                            this.set_path(new_path.clone());
+                                            this.is_editing = false;
+                                            cx.emit(HeaderEvent::NavigateTo(new_path));
                                             cx.notify();
                                         }
                                     }

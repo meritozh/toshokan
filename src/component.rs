@@ -1,12 +1,9 @@
 pub(crate) mod content_viewer;
-pub(crate) mod file_list;
 pub(crate) mod header;
+pub(crate) mod file_tree;
+mod left_dock;
 
 use std::path::PathBuf;
-
-pub(crate) use content_viewer::ContentViewer;
-pub(crate) use file_list::FileList;
-pub(crate) use header::Header;
 
 #[derive(Clone, Debug)]
 pub struct DirEntry {
@@ -18,7 +15,11 @@ pub struct DirEntry {
 impl From<std::fs::DirEntry> for DirEntry {
     fn from(value: std::fs::DirEntry) -> Self {
         DirEntry {
-            name: value.file_name().into_string().unwrap().into(),
+            name: value
+                .file_name()
+                .into_string()
+                .unwrap_or_else(|os| os.to_string_lossy().to_string())
+                .into(),
             is_dir: value.path().is_dir(),
             path: value.path(),
         }

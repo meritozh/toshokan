@@ -1,1 +1,1 @@
-pub(crate) mod toolbar;
+// UI module placeholder

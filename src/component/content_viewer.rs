@@ -1,22 +1,25 @@
 use gpui::{
     App, IntoElement, ParentElement, RenderOnce, SharedString, Styled, Window, div, rgb, white,
 };
+use gpui_component::ActiveTheme;
 
 #[derive(IntoElement)]
 pub struct ContentViewer {
+    file_name: Option<SharedString>,
     content: Option<SharedString>,
 }
 
 impl ContentViewer {
-    pub fn new(content: Option<String>) -> Self {
+    pub fn new(file_name: Option<SharedString>, content: Option<String>) -> Self {
         Self {
+            file_name,
             content: content.map(SharedString::from),
         }
     }
 }
 
 impl RenderOnce for ContentViewer {
-    fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
+    fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
         div()
             .flex_1()
             .flex_col()
@@ -26,14 +29,16 @@ impl RenderOnce for ContentViewer {
                     .p_3()
                     .bg(rgb(0x2d2d2d))
                     .border_b_1()
-                    .border_color(rgb(0x3e3e3e))
+                    .border_color(cx.theme().border)
+                    .rounded(cx.theme().radius)
                     .child(div().text_color(white()).child(format!("📄 {}", file_name)))
             } else {
                 div()
                     .p_3()
                     .bg(rgb(0x2d2d2d))
                     .border_b_1()
-                    .border_color(rgb(0x3e3e3e))
+                    .border_color(cx.theme().border)
+                    .rounded(cx.theme().radius)
                     .child(div().text_color(rgb(0x9ca3af)).child("No file selected"))
             })
             .child(
