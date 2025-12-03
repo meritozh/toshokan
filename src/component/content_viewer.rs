@@ -31,7 +31,7 @@ impl RenderOnce for ContentViewer {
                     .border_b_1()
                     .border_color(cx.theme().border)
                     .rounded(cx.theme().radius)
-                    .child(div().text_color(white()).child(format!("📄 {}", file_name)))
+                    .child(div().child(format!("📄 {}", file_name)))
             } else {
                 div()
                     .p_3()
@@ -58,7 +58,7 @@ impl RenderOnce for ContentViewer {
                             .flex()
                             .items_center()
                             .justify_center()
-                            .text_color(rgb(0x9ca3af))
+                            .text_color(rgb(0x6b7280))
                             .child("Select a file to view its contents")
                     }),
             )

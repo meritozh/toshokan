@@ -1,7 +1,8 @@
 use gpui::{
     Context, CursorStyle, EventEmitter, FocusHandle, InteractiveElement, IntoElement, MouseButton, ParentElement,
-    Render, SharedString, Styled, Window, div, prelude::*, rgb, white,
+    Render, SharedString, Styled, Window, div, prelude::*, px,
 };
+use gpui_component::ActiveTheme;
 use std::path::PathBuf;
 
 #[derive(Clone)]
@@ -62,18 +63,17 @@ impl Render for Header {
         div()
             .flex()
             .items_center()
-            .p_4()
-            .bg(rgb(0x2d2d2d))
+            .px_4()
+            .py_3()
+            .min_h(px(48.0))
             .border_b_1()
-            .border_color(rgb(0x3e3e3e))
+            .border_color(cx.theme().border)
             .child(
                 div()
                     .mr_3()
                     .px_2()
                     .py_1()
-                    .rounded_sm()
-                    .bg(if can_go_back { rgb(0x4a4a4a) } else { rgb(0x2a2a2a) })
-                    .text_color(if can_go_back { white() } else { rgb(0x666666).into() })
+                    .rounded(cx.theme().radius)
                     .child("← Back")
                     .when(can_go_back, |s| {
                             s.on_mouse_down(MouseButton::Left, cx.listener(|this, _event, _window, cx| {
@@ -81,20 +81,14 @@ impl Render for Header {
                             }))
                         }),
             )
-            .child(div().text_color(white()).mr_2().child("Path:"))
+            .child(div().mr_2().child("Path:"))
             .child(
                 div()
                     .flex_1()
                     .p_2()
-                    .bg(rgb(0x1e1e1e))
                     .border_1()
-                    .border_color(if is_editing {
-                        rgb(0x0078d4)
-                    } else {
-                        rgb(0x3e3e3e)
-                    })
-                    .rounded_md()
-                    .text_color(white())
+                    .border_color(cx.theme().border)
+                    .rounded(cx.theme().radius)
                     .child(path_input)
                     .cursor(if is_editing {
                         CursorStyle::IBeam

@@ -185,8 +185,6 @@ impl Render for Shelf {
 
         div()
             .size_full()
-            .bg(rgb(0x1e1e1e))
-            .text_color(white())
             .child(
                 div()
                     .flex_col()
@@ -195,6 +193,7 @@ impl Render for Shelf {
                     .child(
                         div()
                             .flex()
+                            .pt(px(8.0))
                             .size_full()
                             .child(
                                 div()
