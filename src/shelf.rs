@@ -17,7 +17,7 @@ pub struct Shelf {
     header: Entity<Header>,
     file_tree: Entity<FileTree>,
     selected_item: Option<DirEntry>,
-    file_content: Option<String>,
+    content_viewer: Entity<ContentViewer>,
 }
 
 impl Shelf {
@@ -27,6 +27,7 @@ impl Shelf {
 
         let header = cx.new(|cx| Header::view(window, cx, None));
         let file_tree = FileTree::view(window, cx);
+        let content_viewer = cx.new(|cx| ContentViewer::new(window, cx));
 
         // Set up observer for file selection changes
         let file_tree_weak = file_tree.downgrade();
@@ -66,7 +67,7 @@ impl Shelf {
             header,
             file_tree,
             selected_item: None,
-            file_content: None,
+            content_viewer,
         };
 
         this.load_directory_async(this.current_path.clone(), cx);
@@ -104,23 +105,27 @@ impl Shelf {
             // Change directory
             self.navigate_to_directory(entry.path.clone(), cx);
         } else {
-            // Read file content in background
             let path = entry.path.clone();
+            let name = entry.name.clone();
             self.selected_item = Some(entry);
-            let view = cx.entity();
-            let task = cx.background_spawn(async move {
-                fs::read_to_string(&path)
-            });
-            cx.spawn(async move |_, cx| {
-                let content = task.await.ok();
-                if let Err(err) = view.update(cx, |this, cx| {
-                    this.file_content = content;
-                    cx.notify();
-                }) {
-                    eprintln!("Update file content failed: {err}");
-                }
-            })
-            .detach();
+            if ContentViewer::is_image_name(&name) {
+                let _ = self.content_viewer.update(cx, |cv, cx| {
+                    cv.set_image_path(Some(name.clone()), path.clone(), cx);
+                });
+            } else {
+                let view = self.content_viewer.downgrade();
+                let task = cx.background_spawn(async move {
+                    fs::read_to_string(&path)
+                });
+                cx.spawn(async move |_, cx| {
+                    let content = task.await.ok();
+                    if let Some(cv) = view.upgrade() {
+                        let _ = cv.update(cx, |cv, cx| {
+                            cv.set_text(Some(name.clone()), content, cx);
+                        });
+                    }
+                }).detach();
+            }
         }
     }
 
@@ -135,7 +140,9 @@ impl Shelf {
             tree.set_root_path(self.current_path.clone(), cx);
         });
         self.selected_item = None;
-        self.file_content = None;
+        let _ = self.content_viewer.update(cx, |cv, cx| {
+            cv.set_text(None, None, cx);
+        });
         cx.notify();
     }
 
@@ -177,11 +184,7 @@ impl Shelf {
 
 impl Render for Shelf {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        let file_content = self.file_content.clone();
-        let file_name = self
-            .selected_item
-            .as_ref()
-            .map(|e| e.name.clone());
+        let _file_name = self.selected_item.as_ref().map(|e| e.name.clone());
 
         div()
             .size_full()
@@ -203,7 +206,7 @@ impl Render for Shelf {
                                     .max_w(px(500.0))
                                     .child(self.file_tree.clone()),
                             )
-                            .child(ContentViewer::new(file_name, file_content)),
+                            .child(self.content_viewer.clone()),
                     ),
             )
     }
